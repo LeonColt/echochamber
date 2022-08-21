@@ -78,7 +78,7 @@ func (*Controller) BadRequestError(ctx echo.Context, err error) error {
 }
 
 func (*Controller) Unauthorized(ctx echo.Context) error {
-	if err := ctx.JSON(http.StatusBadRequest, HTTPError{
+	if err := ctx.JSON(http.StatusUnauthorized, HTTPError{
 		Code:    http.StatusUnauthorized,
 		Message: "please sign in first",
 	}); err != nil {
@@ -89,7 +89,7 @@ func (*Controller) Unauthorized(ctx echo.Context) error {
 }
 
 func (*Controller) UnauthorizedError(ctx echo.Context, err error) error {
-	if err := ctx.JSON(http.StatusBadRequest, HTTPError{
+	if err := ctx.JSON(http.StatusUnauthorized, HTTPError{
 		Code:    http.StatusUnauthorized,
 		Message: err.Error(),
 	}); err != nil {
@@ -100,7 +100,7 @@ func (*Controller) UnauthorizedError(ctx echo.Context, err error) error {
 }
 
 func (*Controller) Forbidden(ctx echo.Context) error {
-	if err := ctx.JSON(http.StatusBadRequest, HTTPError{
+	if err := ctx.JSON(http.StatusForbidden, HTTPError{
 		Code:    http.StatusForbidden,
 		Message: "you are not allowed to do this",
 	}); err != nil {
@@ -111,7 +111,7 @@ func (*Controller) Forbidden(ctx echo.Context) error {
 }
 
 func (*Controller) ForbiddenError(ctx echo.Context, err error) error {
-	if err := ctx.JSON(http.StatusBadRequest, HTTPError{
+	if err := ctx.JSON(http.StatusForbidden, HTTPError{
 		Code:    http.StatusForbidden,
 		Message: err.Error(),
 	}); err != nil {
