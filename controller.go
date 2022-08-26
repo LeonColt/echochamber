@@ -12,6 +12,16 @@ type Controller struct{}
 
 func (*Controller) Register(parent *echo.Echo) {}
 
+func (ptr *Controller) BindAndValidate(ctx echo.Context, input interface{}) error {
+	if err := ctx.Bind(input); err != nil {
+		return ptr.BadRequestError(ctx, err)
+	}
+	if err := ctx.Validate(input); err != nil {
+		return ptr.BadRequestError(ctx, err)
+	}
+	return nil
+}
+
 func (ptr *Controller) HandleError(ctx echo.Context, err error) error {
 	if httpErr, ok := err.(HttpException); ok {
 		if err := ctx.JSON(httpErr.GetStatus(), HTTPError{
@@ -48,6 +58,18 @@ func (*Controller) OkJSON(ctx echo.Context, data interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func (*Controller) OkBlob(ctx echo.Context, contentType string, data []byte) error {
+	if err := ctx.Blob(http.StatusOK, contentType, data); err != nil {
+		log.Warn(fmt.Sprintf("error serving blob: %#v", err))
+		return err
+	}
+	return nil
+}
+
+func (ptr *Controller) OkTextPlain(ctx echo.Context, data string) error {
+	return ptr.OkBlob(ctx, "text/plain", []byte(data))
 }
 
 func (*Controller) Created(ctx echo.Context, data interface{}) error {
