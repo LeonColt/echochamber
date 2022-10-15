@@ -10,8 +10,6 @@ import (
 
 type Controller struct{}
 
-func (*Controller) Register(parent *echo.Echo) {}
-
 func (ptr *Controller) BindAndValidate(ctx echo.Context, input interface{}) error {
 	if err := ctx.Bind(input); err != nil {
 		return ptr.BadRequestError(ctx, err)
