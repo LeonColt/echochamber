@@ -1,29 +1,40 @@
 package echochamber
 
 import (
-	"fmt"
 	"net/http"
 
+	"github.com/LeonColt/ez"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
+	"github.com/rs/zerolog/log"
 )
 
-type Controller struct{}
+type HTTPError struct {
+	Code    int    `json:"code" example:"400"`
+	Message string `json:"message" example:"status bad request"`
+}
 
-func (ptr *Controller) BindAndValidate(ctx echo.Context, input interface{}) error {
+type MixinController struct{}
+
+func (ptr *MixinController) BindAndValidate(ctx echo.Context, input interface{}) error {
 	if err := ctx.Bind(input); err != nil {
-		return ptr.BadRequestError(ctx, err)
+		return &ez.HttpExceptionBuilder{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
 	}
 	if err := ctx.Validate(input); err != nil {
-		return ptr.BadRequestError(ctx, err)
+		return &ez.HttpExceptionBuilder{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
 	}
 	return nil
 }
 
-func (ptr *Controller) HandleError(ctx echo.Context, err error) error {
-	if httpErr, ok := err.(HttpException); ok {
-		if err := ctx.JSON(httpErr.GetStatus(), HTTPError{
-			Code:    httpErr.GetStatus(),
+func (ptr *MixinController) HandleError(ctx echo.Context, err error) error {
+	if httpErr, ok := err.(ez.HttpException); ok {
+		if err := ctx.JSON(httpErr.GetCode(), HTTPError{
+			Code:    httpErr.GetCode(),
 			Message: err.Error(),
 		}); err != nil {
 			return err
@@ -34,154 +45,154 @@ func (ptr *Controller) HandleError(ctx echo.Context, err error) error {
 	}
 }
 
-func (*Controller) OkHTMLBlob(ctx echo.Context, html []byte) error {
+func (*MixinController) OkHTMLBlob(ctx echo.Context, html []byte) error {
 	if err := ctx.HTMLBlob(http.StatusOK, html); err != nil {
-		log.Warn(fmt.Sprintf("error serving HTML: %#v", err))
+		log.Error().Stack().Err(err).Msg("error serving HTML Blob")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) OkHTML(ctx echo.Context, html string) error {
+func (*MixinController) OkHTML(ctx echo.Context, html string) error {
 	if err := ctx.HTML(http.StatusOK, html); err != nil {
-		log.Warn(fmt.Sprintf("error serving HTML: %#v", err))
+		log.Error().Stack().Err(err).Msg("error serving HTML")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) OkJSON(ctx echo.Context, data interface{}) error {
+func (*MixinController) OkJSON(ctx echo.Context, data interface{}) error {
 	if err := ctx.JSON(http.StatusOK, data); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %#v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) OkBlob(ctx echo.Context, contentType string, data []byte) error {
+func (*MixinController) OkBlob(ctx echo.Context, contentType string, data []byte) error {
 	if err := ctx.Blob(http.StatusOK, contentType, data); err != nil {
-		log.Warn(fmt.Sprintf("error serving blob: %#v", err))
+		log.Error().Stack().Err(err).Msg("error serving blob")
 		return err
 	}
 	return nil
 }
 
-func (ptr *Controller) OkTextPlain(ctx echo.Context, data string) error {
+func (ptr *MixinController) OkTextPlain(ctx echo.Context, data string) error {
 	return ptr.OkBlob(ctx, "text/plain", []byte(data))
 }
 
-func (*Controller) Created(ctx echo.Context, data interface{}) error {
+func (*MixinController) Created(ctx echo.Context, data interface{}) error {
 	if err := ctx.JSON(http.StatusCreated, data); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) NoContent(ctx echo.Context) error {
+func (*MixinController) NoContent(ctx echo.Context) error {
 	if err := ctx.NoContent(http.StatusNoContent); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) BadRequestError(ctx echo.Context, err error) error {
+func (*MixinController) BadRequestError(ctx echo.Context, err error) error {
 	if err := ctx.JSON(http.StatusBadRequest, HTTPError{
 		Code:    http.StatusBadRequest,
 		Message: err.Error(),
 	}); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) Unauthorized(ctx echo.Context) error {
+func (*MixinController) Unauthorized(ctx echo.Context) error {
 	if err := ctx.JSON(http.StatusUnauthorized, HTTPError{
 		Code:    http.StatusUnauthorized,
 		Message: "please sign in first",
 	}); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) UnauthorizedError(ctx echo.Context, err error) error {
+func (*MixinController) UnauthorizedError(ctx echo.Context, err error) error {
 	if err := ctx.JSON(http.StatusUnauthorized, HTTPError{
 		Code:    http.StatusUnauthorized,
 		Message: err.Error(),
 	}); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) Forbidden(ctx echo.Context) error {
+func (*MixinController) Forbidden(ctx echo.Context) error {
 	if err := ctx.JSON(http.StatusForbidden, HTTPError{
 		Code:    http.StatusForbidden,
 		Message: "you are not allowed to do this",
 	}); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) ForbiddenError(ctx echo.Context, err error) error {
+func (*MixinController) ForbiddenError(ctx echo.Context, err error) error {
 	if err := ctx.JSON(http.StatusForbidden, HTTPError{
 		Code:    http.StatusForbidden,
 		Message: err.Error(),
 	}); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) NotFoundError(ctx echo.Context, err error) error {
+func (*MixinController) NotFoundError(ctx echo.Context, err error) error {
 	if err := ctx.JSON(http.StatusNotFound, HTTPError{
 		Code:    http.StatusNotFound,
 		Message: err.Error(),
 	}); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) ConflictError(ctx echo.Context, err error) error {
+func (*MixinController) ConflictError(ctx echo.Context, err error) error {
 	if err := ctx.JSON(http.StatusConflict, HTTPError{
 		Code:    http.StatusConflict,
 		Message: err.Error(),
 	}); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) InternalServerError(ctx echo.Context, err error) error {
-	log.Warn(err)
+func (*MixinController) InternalServerError(ctx echo.Context, err error) error {
+	log.Error().Stack().Err(err).Msg("error occurred internal server error")
 	if err := ctx.JSON(http.StatusInternalServerError, HTTPError{
 		Code:    http.StatusInternalServerError,
 		Message: "Internal Server Error",
 	}); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
 }
 
-func (*Controller) ServiceUnavailableError(ctx echo.Context, err error) error {
-	log.Warn(err)
+func (*MixinController) ServiceUnavailableError(ctx echo.Context, err error) error {
+	log.Error().Stack().Err(err).Msg("error occured unavailable error")
 	if err := ctx.JSON(http.StatusServiceUnavailable, HTTPError{
 		Code:    http.StatusServiceUnavailable,
 		Message: "Service Unavailable",
 	}); err != nil {
-		log.Warn(fmt.Sprintf("error serving JSON: %v", err))
+		log.Error().Stack().Err(err).Msg("error serving JSON")
 		return err
 	}
 	return nil
