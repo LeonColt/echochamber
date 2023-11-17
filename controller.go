@@ -17,24 +17,18 @@ type MixinController struct{}
 
 func (ptr *MixinController) BindAndValidate(ctx echo.Context, input interface{}) error {
 	if err := ctx.Bind(input); err != nil {
-		return &ez.HttpExceptionBuilder{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
+		return ez.New(ez.ErrorCodeInvalidArgument, err.Error())
 	}
 	if err := ctx.Validate(input); err != nil {
-		return &ez.HttpExceptionBuilder{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
+		return ez.New(ez.ErrorCodeInvalidArgument, err.Error())
 	}
 	return nil
 }
 
 func (ptr *MixinController) HandleError(ctx echo.Context, err error) error {
-	if httpErr, ok := err.(ez.HttpException); ok {
-		if err := ctx.JSON(httpErr.GetCode(), HTTPError{
-			Code:    httpErr.GetCode(),
+	if httpErr, ok := err.(*ez.Error); ok {
+		if err := ctx.JSON(int(httpErr.GetCode()), HTTPError{
+			Code:    int(httpErr.GetHttpStatusCode()),
 			Message: err.Error(),
 		}); err != nil {
 			return err
