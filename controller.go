@@ -27,8 +27,8 @@ func (ptr *MixinController) BindAndValidate(ctx echo.Context, input interface{})
 
 func (ptr *MixinController) HandleError(ctx echo.Context, err error) error {
 	if httpErr, ok := err.(*ez.Error); ok {
-		if err := ctx.JSON(int(httpErr.GetCode()), HTTPError{
-			Code:    int(httpErr.GetHttpStatusCode()),
+		if err := ctx.JSON(httpErr.GetHttpStatusCode(), HTTPError{
+			Code:    httpErr.GetHttpStatusCode(),
 			Message: err.Error(),
 		}); err != nil {
 			return err
