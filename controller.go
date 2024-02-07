@@ -71,6 +71,30 @@ func (*MixinController) OkBlob(ctx echo.Context, contentType string, data []byte
 	return nil
 }
 
+func (*MixinController) File(ctx echo.Context, file string) error {
+	if err := ctx.File(file); err != nil {
+		slog.Error("error serving file", slog.Any("err", err))
+		return err
+	}
+	return nil
+}
+
+func (*MixinController) Attachment(ctx echo.Context, file, name string) error {
+	if err := ctx.Attachment(file, name); err != nil {
+		slog.Error("error serving attachment", slog.Any("err", err))
+		return err
+	}
+	return nil
+}
+
+func (*MixinController) Inline(ctx echo.Context, file, name string) error {
+	if err := ctx.Inline(file, name); err != nil {
+		slog.Error("error serving inline", slog.Any("err", err))
+		return err
+	}
+	return nil
+}
+
 func (ptr *MixinController) OkTextPlain(ctx echo.Context, data string) error {
 	return ptr.OkBlob(ctx, "text/plain", []byte(data))
 }
