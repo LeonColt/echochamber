@@ -1,6 +1,7 @@
 package echochamber
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -35,7 +36,8 @@ func (ptr *MixinController) HandleError(ctx echo.Context, err error) error {
 		}
 		return nil
 	} else {
-		return ptr.InternalServerError(ctx, err)
+		slog.Error("error occurred", slog.Any("err", err))
+		return ptr.InternalServerError(ctx, errors.New("internal server error occurred, please try again later"))
 	}
 }
 
